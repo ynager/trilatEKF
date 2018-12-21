@@ -9,5 +9,5 @@ include_directories(${EIGEN_INC_DIR})
 include_directories(include)
 
 
-set(SOURCE_FILES src/kalman.cpp src/main.cpp)
+set(SOURCE_FILES src/kalman.cpp src/main.cpp src/trilatEKF.cpp)
 add_executable(main ${SOURCE_FILES})

@@ -16,5 +16,7 @@ using std::vector;
 int main(int argc, char* argv[]) {
     cout << "Sunflower EKF\n";
     
+    MatrixXd Q = MatrixXd::Zero(4, 4);
+    cout << Q << endl;
     
 }
