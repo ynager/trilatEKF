@@ -5,7 +5,8 @@ project(sunflower_EKF)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 set(EIGEN_INC_DIR /usr/local/Cellar/eigen/3.3.7/include/eigen3)
-include_directories(${EIGEN_INC_DIR})
+set(BOOST_INC_DIR /usr/local/Cellar/boost/1.68.0/include)
+include_directories(${EIGEN_INC_DIR} ${BOOST_INC_DIR})
 include_directories(include)
 
 

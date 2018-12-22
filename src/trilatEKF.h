@@ -19,22 +19,34 @@
 
 using namespace Eigen;
 
-/** Sunflower Measurement struct */
+/** Single Sunflower measurement */
+struct Measurement {
+    long long timestamp_;
+    Vector2d sensorLoc_;
+    double distance_;
+};
+
+/** Trilateration Measurement struct */
 struct TrilatMeasurement {
     long long timestamp_;
-    MatrixXd sensorLoc_;
-    VectorXd distance_;
+    MatrixXd sensorLocs_;
+    VectorXd distances_;
 };
 
 class TrilatEKF{
 public:
     
+    /** Kalman Filter */
     Kalman ekf_;
     
-    /** Constructor */
+    /**
+     * Constructor
+     */
     TrilatEKF(VectorXd xInit, MatrixXd sensorLoc);
     
-    /** Destructor */
+    /**
+     * Destructor
+     */
     ~TrilatEKF();
     
     /**
@@ -48,6 +60,18 @@ public:
      * @param measurement of type TrilatMeasurement
      */
     MatrixXd getJacobian(const MatrixXd &sensorLoc, const VectorXd &x);
+    
+    /**
+     * Match single measurements into trilat measurement
+     */
+    TrilatMeasurement matchMeasurements(std::vector<Measurement> mvec){
+        TrilatMeasurement tm;
+        tm.timestamp_ = mvec[0].timestamp_;
+        tm.sensorLocs_ = MatrixXd(2,3); // TODO magic var
+        tm.distances_ = VectorXd(3);
+        tm.distances_ << mvec[0].distance_, mvec[0].distance_, mvec[0].distance_;
+        return tm;
+    }
     
 private:
     

@@ -1,4 +1,5 @@
 #include <math.h>
+#include <iostream>
 #include "kalman.h"
 
 #define SUNFLOWER_NR 3
@@ -19,14 +20,18 @@ void Kalman::initialize(VectorXd &x, MatrixXd &P, MatrixXd &F,
 }
 
 void Kalman::predict() {
+    //std::cout << F_ << std::endl;
+    //std::cout << x_ << std::endl;
     x_ = F_ * x_;   // project state
     MatrixXd F_t = F_.transpose();
     P_ = F_ * P_ * F_t + Q_; // project error covariance
 }
 
 void Kalman::update(const VectorXd &z) {
-    VectorXd y = z - x_; //
-        
+    //std::cout << "z: " << z << std::endl;
+    //std::cout << "x: " << x_ << std::endl;
+    VectorXd y = z - H_ * x_; // D - H*X_k
+    
     // standart equations
     MatrixXd H_t = H_.transpose(); // transpose measurement matrix
     MatrixXd PH_t = P_ * H_t;
