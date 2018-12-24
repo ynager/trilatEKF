@@ -33,7 +33,9 @@ int main(int argc, char* argv[]) {
     // Trilateration Kalman Filter for object A
     TrilatEKF *tEKF;
     
-    string data("../data/dataset_3.csv"); // load dataset
+    //string data("../data/dataset_3.csv"); // load dataset
+    string data("../data/dataset_simple2.csv"); // load dataset
+
     fstream in(data.c_str());
     if (!in.is_open()) return 1;
     
@@ -58,42 +60,34 @@ int main(int argc, char* argv[]) {
         
         // set initial position estimates
         if (cnt == -1) {
-            xInit_a << stod(vec[0]), stod(vec[1]), 0, 0;
-            xInit_b << stod(vec[2]), stod(vec[3]), 0, 0;
+            xInit_a << stod(vec[0]), stod(vec[1]), 0.0, 0.0;
+            xInit_b << stod(vec[2]), stod(vec[3]), 0.0, 0.0;
             tEKF = new TrilatEKF(xInit_a, sensorLoc);
         }
         else {
             // assign data to individual measurement structs
-            // TODO cheat for now and only consider first object
-            if (cnt % 2 == 0) {
                 Measurement m;
                 m.timestamp_ = stoi(vec[0]);
                 m.sensorLoc_ << stod(vec[1]), stod(vec[2]);
                 m.distance_ = stod(vec[3]);
-                mvec[(cnt%6) / 2] = m; // fill in measurements
+                mvec[(cnt%3)] = m; // fill in measurements
                 
                 //copy(vec.begin(), vec.end(), ostream_iterator<string>(cout, " "));
                 
-                if ((cnt / 2) % 3 == 2 && cnt > 0) { // after 3 measurements run EKF
+                if (cnt % 3 == 2) { // after 3 measurements run EKF
+                    cout << "meas: " << mvec[0].distance_ << ", " << mvec[1].distance_ << ", " << mvec[2].distance_ << std::endl;
                     TrilatMeasurement tm = tEKF->matchMeasurements(mvec);
                     tEKF->processMeasurement(tm);
                     cout << "x: " << tEKF->ekf_.x_.transpose() << endl;
                     
-                    myfile << tEKF->ekf_.x_.transpose() << "\n";
-                    
-                }
-                
-                // match measurement
-                
-                
+                    myfile << tEKF->ekf_.x_(0) << ","
+                           << tEKF->ekf_.x_(1) << ","
+                           << tEKF->ekf_.x_(2) << ","
+                           << tEKF->ekf_.x_(3) << "\n";
+
             }
         }
-        
         cnt += 1;
     }
-    
     myfile.close(); // close output file
-    
-    
-    
 }

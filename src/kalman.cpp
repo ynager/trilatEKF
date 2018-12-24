@@ -14,17 +14,16 @@ void Kalman::initialize(VectorXd &x, MatrixXd &P, MatrixXd &F,
     x_ = x;
     P_ = P;
     F_ = F;
-    Q_ = Q;
     H_ = H;
     R_ = R;
+    Q_ = Q;
 }
 
 void Kalman::predict() {
-    //std::cout << F_ << std::endl;
-    //std::cout << x_ << std::endl;
     x_ = F_ * x_;   // project state
-    MatrixXd F_t = F_.transpose();
-    P_ = F_ * P_ * F_t + Q_; // project error covariance
+    P_ = F_ * P_ * F_.transpose() + Q_; // project error covariance
+    //std::cout << P_ << std::endl;
+    //std::cout << x_ << std::endl;
 }
 
 void Kalman::update(const VectorXd &z) {

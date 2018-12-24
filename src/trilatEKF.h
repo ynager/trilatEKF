@@ -11,11 +11,9 @@
 
 #define SUNFLOWER_NR 3
 #define STATE_SIZE 4
-#define DT 0.25 // TODO  check parameters
-#define ACCEL_NOISE_MAG 0.000001/DT
 #define VAR_Z 0.1 // sunflower meas variance
-#define MEAS_NOISE_X 3.0
-#define MEAS_NOISE_Y 3.0
+#define MEAS_NOISE_X 5.05
+#define MEAS_NOISE_Y 5.05
 
 using namespace Eigen;
 
@@ -64,20 +62,13 @@ public:
     /**
      * Match single measurements into trilat measurement
      */
-    TrilatMeasurement matchMeasurements(std::vector<Measurement> mvec){
-        TrilatMeasurement tm;
-        tm.timestamp_ = mvec[0].timestamp_;
-        tm.sensorLocs_ = MatrixXd(2,3); // TODO magic var
-        tm.distances_ = VectorXd(3);
-        tm.distances_ << mvec[0].distance_, mvec[0].distance_, mvec[0].distance_;
-        return tm;
-    }
+    TrilatMeasurement matchMeasurements(std::vector<Measurement> mvec);
     
 private:
     
     Eigen::MatrixXd R_;
     Eigen::MatrixXd H_;
-    long long timestamp_prev_ = 0;
+    long long timestamp_prev_;
     
 };
 
