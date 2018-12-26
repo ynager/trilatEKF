@@ -12,8 +12,8 @@
 #define SUNFLOWER_NR 3
 #define STATE_SIZE 4
 #define VAR_Z 0.1 // sunflower meas variance
-#define MEAS_NOISE_X 5.05
-#define MEAS_NOISE_Y 5.05
+#define MEAS_NOISE_X 10.0
+#define MEAS_NOISE_Y 10.0
 
 using namespace Eigen;
 
@@ -51,7 +51,7 @@ public:
      * Process measurement of type TrilatMeasurement
      * @param Trilateration measurement package
      */
-    void processMeasurement(const TrilatMeasurement &trilatMeasurement);
+    void processMeasurements(const std::vector<TrilatMeasurement> &trilatMeasurements);
     
     /**
      * calculate jacobian of measurement matrix
@@ -59,17 +59,21 @@ public:
      */
     MatrixXd getJacobian(const MatrixXd &sensorLoc, const VectorXd &x);
     
+    MatrixXd getJacobian(const TrilatMeasurement &m);
+    
     /**
      * Match single measurements into trilat measurement
      */
-    TrilatMeasurement matchMeasurements(std::vector<Measurement> mvec);
+    TrilatMeasurement toTrilatMeasurement(Measurement m0, Measurement m1, Measurement m2);
+    
+    std::vector<TrilatMeasurement> getCombinations(std::vector<Measurement> mVec);
     
 private:
     
     Eigen::MatrixXd R_;
     Eigen::MatrixXd H_;
+    Eigen::MatrixXd sensorLoc_;
     long long timestamp_prev_;
-    
 };
 
 #endif

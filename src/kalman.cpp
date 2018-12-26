@@ -2,9 +2,6 @@
 #include <iostream>
 #include "kalman.h"
 
-#define SUNFLOWER_NR 3
-
-
 Kalman::Kalman() {}
 
 Kalman::~Kalman() {}
@@ -29,18 +26,56 @@ void Kalman::predict() {
 void Kalman::update(const VectorXd &z) {
     //std::cout << "z: " << z << std::endl;
     //std::cout << "x: " << x_ << std::endl;
-    VectorXd y = z - H_ * x_; // D - H*X_k
+    VectorXd y = z - H_ * x_;       // D - H*X_k (innovation)
     
-    // standart equations
-    MatrixXd H_t = H_.transpose(); // transpose measurement matrix
+    MatrixXd H_t = H_.transpose();  // transpose measurement matrix
     MatrixXd PH_t = P_ * H_t;
-    MatrixXd S = H_ * PH_t + R_; // innovation covariance
+    MatrixXd S = H_ * PH_t + R_;    // innovation covariance
     MatrixXd S_i = S.inverse();
-    MatrixXd K = PH_t * S_i; // kalman gain
+    MatrixXd K = PH_t * S_i;        // kalman gain
     
-    // calculate new estimate
-    x_ = x_ + (K * y);
+    update(y, K);                   // perform updates
+}
+
+void Kalman::updateMahalanobis(const MatrixXd zVec) {
+    //std::cout << "z: " << z << std::endl;
+    //std::cout << "x: " << x_ << std::endl;
+    double dist_min = std::numeric_limits<short>::max();
+    VectorXd y_best;
+    MatrixXd PH_t_best;
+    MatrixXd S_i_best;
+    
+    for(int i = 0; i < zVec.cols(); ++i) {
+        
+        VectorXd z = zVec.col(i);       // extract single measurement
+        VectorXd y = z - H_ * x_;       // D - H*X_k (innovation)
+        
+        MatrixXd H_t = H_.transpose();  // transpose measurement matrix
+        MatrixXd PH_t = P_ * H_t;
+        MatrixXd S = H_ * PH_t + R_;    // innovation covariance
+        MatrixXd S_i = S.inverse();
+        
+        // calculate Mahalanobis distance
+        double dist = z.transpose() * S_i * z;
+        if(dist < dist_min) {
+            y_best = y;
+            PH_t_best = PH_t;
+            S_i_best = S_i;
+            dist_min = dist;
+        }
+        
+    }
+    MatrixXd K = PH_t_best * S_i_best;  // kalman gain
+    update(y_best, K);                  // perform updates
+}
+
+void Kalman::update(const VectorXd &y, const MatrixXd &K) {
+    x_ = x_ + (K * y);             // update x_
     long x_size = x_.size();
     MatrixXd I = MatrixXd::Identity(x_size, x_size);
-    P_ = (I - K * H_) * P_;
+    P_ = (I - K * H_) * P_;             // update p_
 }
+
+
+
+

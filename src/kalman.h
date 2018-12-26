@@ -1,6 +1,7 @@
 #ifndef KALMAN_H_
 #define KALMAN_H_
 
+#include <vector>
 #include "Eigen/Dense"
 
 using namespace Eigen;
@@ -45,6 +46,13 @@ public:
      * @param z_ measurement at timestep k+1
      */
     void update(const VectorXd &z_);
+    void update(const VectorXd &y, const MatrixXd &K);
+    
+    /**
+     * Update state and state covariance using measurement with lowest Mahalanobis distance
+     * @param zVec_ vector of measurements at timestep k+1
+     */
+    void updateMahalanobis(const MatrixXd zVec);
     
 private:
     

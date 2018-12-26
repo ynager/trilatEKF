@@ -23,68 +23,69 @@ int main(int argc, char* argv[]) {
     cout << "Sunflower EKF\n";
     
     // initialize objects
-    Vector4d xInit_a;
-    Vector4d xInit_b;
+    VectorXd xInit_a(STATE_SIZE);
+    VectorXd xInit_b(STATE_SIZE);
     MatrixXd sensorLoc = MatrixXd(3,2); // initial sensor location
     sensorLoc << 0.0, 0.0,
-                 5.0, 0.0,
-                 0.0, 5.0;
+    5.0, 0.0,
+    0.0, 5.0;
     
-    // Trilateration Kalman Filter for object A
-    TrilatEKF *tEKF;
+    // Kalman Filter for objecs
+    TrilatEKF *tEKF_0;
+    TrilatEKF *tEKF_1;
     
-    //string data("../data/dataset_3.csv"); // load dataset
-    string data("../data/dataset_simple2.csv"); // load dataset
-
-    fstream in(data.c_str());
-    if (!in.is_open()) return 1;
-    
-    typedef tokenizer< escaped_list_separator<char> > Tokenizer;
-    vector<string> vec;
-    string line;
-    
-    
-    long cnt = -1;
-    // process dataset line by line
-    std::vector<Measurement> mvec(3);
-    
-    // output file
+    // Output file handling
     std::ofstream myfile;
     myfile.open ("output.csv");
     
-    while (getline(in,line))
+    string data("../data/dataset_3.csv"); // load dataset
+    //string data("../data/dataset_simple2.csv"); // load dataset
+    
+    // Input file handling
+    fstream in(data.c_str());
+    if (!in.is_open()) return 1;
+    typedef tokenizer< escaped_list_separator<char> > Tokenizer;
+    vector<string> vec;
+    string line;
+    long cnt = -1;
+    std::vector<Measurement> mVec;
+    
+    while (getline(in,line) ) //&& cnt < 20)
     {
         Tokenizer tok(line);
         vec.assign(tok.begin(),tok.end());
-        //copy(vec.begin(), vec.end(), ostream_iterator<string>(cout, " "));
         
-        // set initial position estimates
-        if (cnt == -1) {
-            xInit_a << stod(vec[0]), stod(vec[1]), 0.0, 0.0;
-            xInit_b << stod(vec[2]), stod(vec[3]), 0.0, 0.0;
-            tEKF = new TrilatEKF(xInit_a, sensorLoc);
+        if (cnt == -1) {            // set initial position estimates
+            xInit_a << stod(vec[0]), stod(vec[1]), 0.0, 0.0; //, 0.0, 0.0;
+            xInit_b << stod(vec[2]), stod(vec[3]), 0.0, 0.0; //, 0.0, 0.0;
+            tEKF_0 = new TrilatEKF(xInit_a, sensorLoc);
+            tEKF_1 = new TrilatEKF(xInit_b, sensorLoc);
         }
         else {
-            // assign data to individual measurement structs
-                Measurement m;
-                m.timestamp_ = stoi(vec[0]);
-                m.sensorLoc_ << stod(vec[1]), stod(vec[2]);
-                m.distance_ = stod(vec[3]);
-                mvec[(cnt%3)] = m; // fill in measurements
+            // assign to measurement struct
+            Measurement m;
+            m.timestamp_ = stoi(vec[0]);
+            m.sensorLoc_ << stod(vec[1]), stod(vec[2]);
+            m.distance_ = stod(vec[3]);
+            mVec.push_back(m);
+            
+            if (cnt % 6 == 5) { // after 6 measurements match & run EKF
+                // generate all measurement combinations
+                std::vector<TrilatMeasurement> tmVec = tEKF_0->getCombinations(mVec);
+                mVec.clear();
+                tEKF_0->processMeasurements(tmVec);
+                tEKF_1->processMeasurements(tmVec);
                 
-                //copy(vec.begin(), vec.end(), ostream_iterator<string>(cout, " "));
+                // write to file
+                myfile << m.timestamp_ << ","
+                << 0 << ","
+                << tEKF_0->ekf_.x_(0) << ","
+                << tEKF_0->ekf_.x_(1) << "\n";
                 
-                if (cnt % 3 == 2) { // after 3 measurements run EKF
-                    cout << "meas: " << mvec[0].distance_ << ", " << mvec[1].distance_ << ", " << mvec[2].distance_ << std::endl;
-                    TrilatMeasurement tm = tEKF->matchMeasurements(mvec);
-                    tEKF->processMeasurement(tm);
-                    cout << "x: " << tEKF->ekf_.x_.transpose() << endl;
-                    
-                    myfile << tEKF->ekf_.x_(0) << ","
-                           << tEKF->ekf_.x_(1) << ","
-                           << tEKF->ekf_.x_(2) << ","
-                           << tEKF->ekf_.x_(3) << "\n";
-
+                myfile << m.timestamp_ << ","
+                << 1 << ","
+                << tEKF_1->ekf_.x_(0) << ","
+                << tEKF_1->ekf_.x_(1) << "\n";
             }
         }
         cnt += 1;
