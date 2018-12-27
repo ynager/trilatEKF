@@ -1,13 +1,12 @@
 
 cmake_minimum_required(VERSION 3.0.0)
-project(sunflower_EKF)
+project(trilatEKF)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-set(EIGEN_INC_DIR /usr/local/Cellar/eigen/3.3.7/include/eigen3)
-set(BOOST_INC_DIR /usr/local/Cellar/boost/1.68.0/include)
-include_directories(${EIGEN_INC_DIR} ${BOOST_INC_DIR})
-include_directories(include)
+find_package(Boost REQUIRED)
+find_package(Eigen3 REQUIRED)
+include_directories(include ${Boost_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
 
 
 set(SOURCE_FILES src/kalman.cpp src/main.cpp src/trilatEKF.cpp)
