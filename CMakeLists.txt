@@ -10,4 +10,4 @@ include_directories(include ${Boost_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
 
 
 set(SOURCE_FILES src/kalman.cpp src/main.cpp src/trilatEKF.cpp)
-add_executable(main ${SOURCE_FILES})
+add_executable(trilatEKF ${SOURCE_FILES})
