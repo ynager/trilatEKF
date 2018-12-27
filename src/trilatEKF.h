@@ -51,7 +51,7 @@ public:
      * Process measurement of type TrilatMeasurement
      * @param Trilateration measurement package
      */
-    void processMeasurements(const std::vector<TrilatMeasurement> &trilatMeasurements);
+    void processMeasurements(std::vector<TrilatMeasurement>* trilatMeasurements);
     
     /**
      * calculate jacobian of measurement matrix

@@ -51,8 +51,9 @@ public:
     /**
      * Update state and state covariance using measurement with lowest Mahalanobis distance
      * @param zVec_ vector of measurements at timestep k+1
+     * @return idx of measurement with lowest Mahalanobis distance
      */
-    void updateMahalanobis(const MatrixXd zVec);
+    int updateMahalanobis(const MatrixXd zVec);
     
 private:
     

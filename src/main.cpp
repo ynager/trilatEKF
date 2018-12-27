@@ -58,8 +58,8 @@ int main(int argc, char* argv[]) {
         if (cnt == -1) {            // set initial position estimates
             xInit_a << stod(vec[0]), stod(vec[1]), 0.0, 0.0; //, 0.0, 0.0;
             xInit_b << stod(vec[2]), stod(vec[3]), 0.0, 0.0; //, 0.0, 0.0;
-            tEKF_0 = new TrilatEKF(xInit_a, sensorLoc);
-            tEKF_1 = new TrilatEKF(xInit_b, sensorLoc);
+            tEKF_0 = new TrilatEKF(xInit_b, sensorLoc);
+            tEKF_1 = new TrilatEKF(xInit_a, sensorLoc);
         }
         else {
             // assign to measurement struct
@@ -73,8 +73,8 @@ int main(int argc, char* argv[]) {
                 // generate all measurement combinations
                 std::vector<TrilatMeasurement> tmVec = tEKF_0->getCombinations(mVec);
                 mVec.clear();
-                tEKF_0->processMeasurements(tmVec);
-                tEKF_1->processMeasurements(tmVec);
+                tEKF_0->processMeasurements(&tmVec);
+                tEKF_1->processMeasurements(&tmVec);
                 
                 // write to file
                 myfile << m.timestamp_ << ","

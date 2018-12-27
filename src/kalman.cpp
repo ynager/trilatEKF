@@ -37,10 +37,11 @@ void Kalman::update(const VectorXd &z) {
     update(y, K);                   // perform updates
 }
 
-void Kalman::updateMahalanobis(const MatrixXd zVec) {
+int Kalman::updateMahalanobis(const MatrixXd zVec) {
     //std::cout << "z: " << z << std::endl;
     //std::cout << "x: " << x_ << std::endl;
     double dist_min = std::numeric_limits<short>::max();
+    int idx_best = 0;
     VectorXd y_best;
     MatrixXd PH_t_best;
     MatrixXd S_i_best;
@@ -58,6 +59,7 @@ void Kalman::updateMahalanobis(const MatrixXd zVec) {
         // calculate Mahalanobis distance
         double dist = z.transpose() * S_i * z;
         if(dist < dist_min) {
+            idx_best = i;
             y_best = y;
             PH_t_best = PH_t;
             S_i_best = S_i;
@@ -67,6 +69,8 @@ void Kalman::updateMahalanobis(const MatrixXd zVec) {
     }
     MatrixXd K = PH_t_best * S_i_best;  // kalman gain
     update(y_best, K);                  // perform updates
+    
+    return idx_best;
 }
 
 void Kalman::update(const VectorXd &y, const MatrixXd &K) {
