@@ -20,15 +20,15 @@ using Eigen::VectorXd;
 using std::vector;
 
 int main(int argc, char* argv[]) {
-    cout << "Sunflower EKF\n";
+    cout << "Running trilatEKF...\n";
     
     // initialize objects
-    VectorXd xInit_a(STATE_SIZE);
-    VectorXd xInit_b(STATE_SIZE);
+    VectorXd xInit_0(STATE_SIZE);
+    VectorXd xInit_1(STATE_SIZE);
     MatrixXd sensorLoc = MatrixXd(3,2); // initial sensor location
-    sensorLoc << 0.0, 0.0,
-    5.0, 0.0,
-    0.0, 5.0;
+    sensorLoc <<    0.0, 0.0,
+                    5.0, 0.0,
+                    0.0, 5.0;
     
     // Kalman Filter for objecs
     TrilatEKF *tEKF_0;
@@ -50,16 +50,16 @@ int main(int argc, char* argv[]) {
     long cnt = -1;
     std::vector<Measurement> mVec;
     
-    while (getline(in,line) ) //&& cnt < 20)
+    while (getline(in,line) )
     {
         Tokenizer tok(line);
         vec.assign(tok.begin(),tok.end());
         
         if (cnt == -1) {            // set initial position estimates
-            xInit_a << stod(vec[0]), stod(vec[1]), 0.0, 0.0; //, 0.0, 0.0;
-            xInit_b << stod(vec[2]), stod(vec[3]), 0.0, 0.0; //, 0.0, 0.0;
-            tEKF_0 = new TrilatEKF(xInit_b, sensorLoc);
-            tEKF_1 = new TrilatEKF(xInit_a, sensorLoc);
+            xInit_1 << stod(vec[0]), stod(vec[1]), 0.0, 0.0; //, 0.0, 0.0;
+            xInit_0 << stod(vec[2]), stod(vec[3]), 0.0, 0.0; //, 0.0, 0.0;
+            tEKF_0 = new TrilatEKF(xInit_0, sensorLoc);
+            tEKF_1 = new TrilatEKF(xInit_1, sensorLoc);
         }
         else {
             // assign to measurement struct
@@ -75,7 +75,10 @@ int main(int argc, char* argv[]) {
                 mVec.clear();
                 tEKF_0->processMeasurements(&tmVec);
                 tEKF_1->processMeasurements(&tmVec);
-                
+                std::cout << "Timestamp: " << m.timestamp_ << std::endl;
+                std::cout << "Object 0 :" << tEKF_0->ekf_.x_.transpose() << "\n";
+                std::cout << "Object 1 :" << tEKF_1->ekf_.x_.transpose() << "\n\n";
+
                 // write to file
                 myfile << m.timestamp_ << ","
                 << 0 << ","

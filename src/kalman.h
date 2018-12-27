@@ -15,6 +15,7 @@ public:
     MatrixXd Q_;    // process covariance matrix
     MatrixXd H_;    // measurement matrix
     MatrixXd R_;    // measurement covariance matrix
+    // TODO: make access more restricted
     
     /**
      * Constructor

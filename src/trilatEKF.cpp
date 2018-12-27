@@ -13,7 +13,7 @@ TrilatEKF::TrilatEKF(VectorXd xInit, MatrixXd sensorLoc) {
     MatrixXd PInit = MatrixXd::Zero(STATE_SIZE, STATE_SIZE);                    // only position of initial state is known
     PInit(2,2) = 10;
     PInit(3,3) = 10;
-    std::cout << "xInit: " << xInit << std::endl;
+    std::cout << "xInit: " << xInit.transpose() << std::endl;
     MatrixXd HInit = getJacobian(sensorLoc, xInit);                             // calculate initial measurement matrix H
     
     ekf_.initialize(xInit, PInit, F, HInit, R, Q);                              // initialize Kalman Filter with xInit
