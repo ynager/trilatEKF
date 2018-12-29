@@ -12,27 +12,31 @@ TrilatEKF::TrilatEKF(const VectorXd &x_init, const MatrixXd &sensorloc, const Tr
     this->statesize_ = x_init.size();
     this->p_ = p;
     this->timestamp_prev_ = 0;
+    this->sensorloc_ = sensorloc;
     
-    sensorloc_ = sensorloc;
-    MatrixXd F = MatrixXd::Identity(statesize_, statesize_);                    // set state transition matrix F
-    MatrixXd R = MatrixXd::Identity(SUNFLOWER_NR, SUNFLOWER_NR) * p_.var_z;     // set measurement covariance matrix R
-    MatrixXd Q = MatrixXd::Identity(statesize_, statesize_);                    // set process noise covariance
+    MatrixXd F_init = MatrixXd::Identity(statesize_, statesize_);                   // set state transition matrix F
+    MatrixXd Q_init = MatrixXd::Identity(statesize_, statesize_);                   // set process noise covariance
     
-    MatrixXd PInit = MatrixXd::Identity(statesize_, statesize_) * 0.5;          // only position of initial state is known
-    // PInit(2,2) = 10; // TODO fix this
-    // PInit(3,3) = 10;
+    MatrixXd H_init = getJacobian(sensorloc, x_init);                               // calculate initial measurement matrix H
+    MatrixXd R_init = MatrixXd::Identity(SUNFLOWER_NR, SUNFLOWER_NR) * p_.var_z;    // set measurement covariance matrix R
+    MatrixXd P_init = MatrixXd::Identity(statesize_, statesize_)*10;                // only position of initial state is known
+    P_init(0,0) = 0.01; // TODO put outside TrilatEKF
+    P_init(1,1) = 0.01;
     
-    MatrixXd HInit = getJacobian(sensorloc, x_init);                             // calculate initial measurement matrix H
-    
-    ekf_.initialize(x_init, PInit, F, HInit, R, Q);                              // initialize Kalman Filter with xInit
+    ekf_.initialize(x_init, P_init, F_init, H_init, R_init, Q_init);                // initialize Kalman Filter with x_init
 }
 
 TrilatEKF::~TrilatEKF() {}
 
 void TrilatEKF::processMeasurements(std::vector<TrilatMeasurement>* measurements){
     
-    // ** PREDICTION **
-    double dt = ((*measurements)[0].timestamp - timestamp_prev_) / 1000.0; // get time delta dt [seconds]
+    // PREDICTION
+    double dt = ((*measurements)[0].timestamp - timestamp_prev_) / 1000.0;  // get time delta dt [seconds]
+    
+    if(dt == 0) {
+        return;
+    }
+    
     double dt2 = dt * dt;
     double dt3 = dt2 * dt;
     double dt4 = dt3 * dt;
@@ -69,15 +73,11 @@ void TrilatEKF::processMeasurements(std::vector<TrilatMeasurement>* measurements
             ekf_.Q_ << p_.var_x, 0, 0, p_.var_y;
     }
     
-    // perform prediction step
-    // std::cout << "x: " << ekf_.x_(0) << ", " << ekf_.x_(1) << std::endl;
-    ekf_.predict();
-    // std::cout << "x predicted: " << ekf_.x_(0) << ", " << ekf_.x_(1) << std::endl;
+    ekf_.predict();     // perform prediction step
     
-    // ** UPDATE **
-    MatrixXd H = getJacobian((*measurements)[0].sensorlocs, ekf_.x_);     // get current jacobian
+    // UPDATE
+    MatrixXd H = getJacobian((*measurements)[0].sensorlocs, ekf_.x_);   // get current jacobian
     ekf_.H_ = H;
-    // std::cout << "H: " << H << "\n\n";
     // TODO set H row to zero if sensor out of range
     
     // put distances into Matrix
@@ -85,8 +85,14 @@ void TrilatEKF::processMeasurements(std::vector<TrilatMeasurement>* measurements
     for (int i = 0; i < (*measurements).size(); i++)
         distanceMatrix.col(i) = (*measurements)[i].distances;
     
+    // calculate expected measurement
+    VectorXd h(3);
+    h <<    sqrt( pow(ekf_.x_(0) - sensorloc_(0,0), 2) + pow(ekf_.x_(1) - sensorloc_(0, 1), 2)),
+            sqrt( pow(ekf_.x_(0) - sensorloc_(1,0), 2) + pow(ekf_.x_(1) - sensorloc_(1, 1), 2)),
+            sqrt( pow(ekf_.x_(0) - sensorloc_(2,0), 2) + pow(ekf_.x_(1) - sensorloc_(2, 1), 2));
+    
     // perform update step
-    uint16_t idx = ekf_.updateMahalanobis(distanceMatrix);
+    uint16_t idx = ekf_.updateMahalanobis(distanceMatrix, h);
     
     // remove "used" measurements
     TrilatMeasurement a = (*measurements)[(idx + 4) % 8]; // measurements for other object known since only two readings per sensor
@@ -94,31 +100,20 @@ void TrilatEKF::processMeasurements(std::vector<TrilatMeasurement>* measurements
     (*measurements).push_back(a);
 }
 
-MatrixXd TrilatEKF::getJacobian(const MatrixXd &sensorLoc, const VectorXd &x){
-    
+MatrixXd TrilatEKF::getJacobian(const MatrixXd &sensorloc, const VectorXd &x){
     MatrixXd H = MatrixXd::Zero(SUNFLOWER_NR, statesize_);
     for (int i = 0; i < SUNFLOWER_NR; ++i) {
-        double den = sqrt(pow((x(0)-sensorLoc(i,0)),2) + pow((x(1)-sensorLoc(i,1)),2));
-        if (den < 0.1) {
+        double den = sqrt(pow(x(0)-sensorloc(i,0),2) + pow(x(1)-sensorloc(i,1),2));
+        if (den < 0.001) {
             std::cout << "Error: Division by zero in getJacobian()\n";
             return H;
         }
-        double dh_dx = (x(0)-sensorLoc(i,0)) / den;
-        double dh_dy = (x(1)-sensorLoc(i,1)) / den;
+        double dh_dx = (x(0)-sensorloc(i,0)) / den;
+        double dh_dy = (x(1)-sensorloc(i,1)) / den;
         H(i, 0) = dh_dx;
         H(i, 1) = dh_dy;
     }
     return H;
-}
-
-TrilatMeasurement TrilatEKF::toTrilatMeasurement(const Measurement &m0, const Measurement &m1, const Measurement &m2){
-    TrilatMeasurement tm;
-    tm.timestamp = m0.timestamp;
-    tm.sensorlocs = MatrixXd(SUNFLOWER_NR, 2);
-    tm.sensorlocs << m0.sensorloc.transpose(), m1.sensorloc.transpose(), m2.sensorloc.transpose();
-    tm.distances = VectorXd(SUNFLOWER_NR);
-    tm.distances << m0.distance, m1.distance, m2.distance;
-    return tm;
 }
 
 vector<TrilatMeasurement> TrilatEKF::getCombinations(const vector<Measurement> &mVec){
@@ -133,5 +128,15 @@ vector<TrilatMeasurement> TrilatEKF::getCombinations(const vector<Measurement> &
     tmVec[6] = toTrilatMeasurement(mVec[1], mVec[2], mVec[5]);
     tmVec[7] = toTrilatMeasurement(mVec[1], mVec[2], mVec[4]);
     return tmVec;
+}
+
+TrilatMeasurement TrilatEKF::toTrilatMeasurement(const Measurement &m0, const Measurement &m1, const Measurement &m2){
+    TrilatMeasurement tm;
+    tm.timestamp = m0.timestamp;
+    tm.sensorlocs = MatrixXd(SUNFLOWER_NR, 2);
+    tm.sensorlocs << m0.sensorloc.transpose(), m1.sensorloc.transpose(), m2.sensorloc.transpose();
+    tm.distances = VectorXd(SUNFLOWER_NR);
+    tm.distances << m0.distance, m1.distance, m2.distance;
+    return tm;
 }
 

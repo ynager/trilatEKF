@@ -42,7 +42,7 @@ void Kalman::update(const VectorXd &z) {
     update(y, K);                   // perform updates
 }
 
-uint16_t Kalman::updateMahalanobis(const MatrixXd &zvec) {
+uint16_t Kalman::updateMahalanobis(const MatrixXd &zvec, const VectorXd &h) {
     
     double dist_min = std::numeric_limits<double>::max();
     uint16_t idx_best = 0;
@@ -53,7 +53,9 @@ uint16_t Kalman::updateMahalanobis(const MatrixXd &zvec) {
     for(int i = 0; i < zvec.cols(); ++i) {
         
         VectorXd z = zvec.col(i);       // extract single measurement
-        VectorXd y = z - H_ * x_;       // D - H*X_k (innovation)
+        
+        //VectorXd y = z - H_ * x_;     // D - H*X_k (innovation)
+        VectorXd y = z - h;
         
         MatrixXd H_t = H_.transpose();  // transpose measurement matrix
         MatrixXd PH_t = P_ * H_t;

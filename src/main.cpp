@@ -16,6 +16,7 @@
 #include "helpers.h"
 #include "trilatEKF.h"
 
+// set state size (2: P, 4: PV, 6: PVA)
 #define STATE_SIZE 4
 
 using namespace std;
@@ -26,8 +27,8 @@ using Eigen::VectorXd;
 int main(int argc, char* argv[]) {
     cout << "Running trilatEKF...\n";
     
-    // set EKF params
-    TrilatParams ekfparams = {0.1, 1.0, 1.0};
+    // set EKF params (variance z, variance x, variance y)
+    TrilatParams ekfparams = {0.01, 0.1, 0.1};
     
     // initialize objects
     VectorXd x_init_0 = VectorXd::Zero(STATE_SIZE);
@@ -62,7 +63,7 @@ int main(int argc, char* argv[]) {
         Tokenizer tok(line);
         vec.assign(tok.begin(),tok.end());
         
-        if (cnt == -1) {            // set initial position estimates
+        if (cnt == -1) {    // set initial position estimates
             x_init_1(0) = stod(vec[0]);
             x_init_1(1) = stod(vec[1]);
             x_init_0(0) = stod(vec[2]);
@@ -82,6 +83,8 @@ int main(int argc, char* argv[]) {
                 // generate all measurement combinations
                 std::vector<TrilatMeasurement> tmVec = tekf_0->getCombinations(mVec);
                 mVec.clear();
+                
+                // process measurement
                 tekf_0->processMeasurements(&tmVec);
                 tekf_1->processMeasurements(&tmVec);
                 

@@ -37,12 +37,12 @@ public:
     
     /**
      * @brief Initialize Kalman Filter
-     * @param x_ Initial state
-     * @param P_ Initial state covariance
-     * @param F_ Transistion matrix
-     * @param H_ Measurement matrix
-     * @param R_ Measurement covariance matrix
-     * @param Q_ Process covariance matrix
+     * @param x Initial state estimate
+     * @param P Initial state covariance
+     * @param F Transistion matrix
+     * @param H Measurement matrix
+     * @param R Measurement covariance matrix
+     * @param Q Process covariance matrix
      */
     void initialize(const VectorXd &x, const MatrixXd &P, const MatrixXd &F,
                     const MatrixXd &H, const MatrixXd &R, const MatrixXd &Q);
@@ -54,16 +54,17 @@ public:
     
     /**
      * @brief Update state and state covariance using extended kalman filter
-     * @param z_ measurement at timestep k+1
+     * @param z measurement at timestep k+1
      */
     void update(const VectorXd &z);
     
     /**
      * @brief Update state and state covariance using measurement with lowest Mahalanobis distance
-     * @param zVec_ vector of measurements at timestep k+1
+     * @param zvec vector of measurements at timestep k+1
+     * @param h expected measurement
      * @return idx of measurement with lowest Mahalanobis distance
      */
-    uint16_t updateMahalanobis(const MatrixXd &zvec);
+    uint16_t updateMahalanobis(const MatrixXd &zvec, const VectorXd &h);
     
 private:
     

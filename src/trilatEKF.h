@@ -16,8 +16,8 @@
 
 #define SUNFLOWER_NR 3
 #define VAR_Z 0.1 // sunflower meas variance
-#define MEAS_NOISE_X 10.0
-#define MEAS_NOISE_Y 10.0
+#define MEAS_NOISE_X 5.0
+#define MEAS_NOISE_Y 5.0
 
 using namespace Eigen;
 
@@ -69,11 +69,11 @@ public:
     
     /**
      * @brief calculate jacobian of measurement matrix
-     * @param sensorLoc current sensor location
+     * @param sensorloc current sensor location
      * @param x current state estimate
      * @return jacobian matrix
      */
-    MatrixXd getJacobian(const MatrixXd &sensorLoc, const VectorXd &x);
+    MatrixXd getJacobian(const MatrixXd &sensorloc, const VectorXd &x);
     
     /**
      * @brief calculate jacobian of measurement matrix
