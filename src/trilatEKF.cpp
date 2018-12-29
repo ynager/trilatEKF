@@ -6,25 +6,25 @@
 #include "trilatEKF.h"
 using namespace std;
 
-TrilatEKF::TrilatEKF(VectorXd xInit, MatrixXd sensorLoc, TrilatParams p) {
+TrilatEKF::TrilatEKF(const VectorXd &x_init, const MatrixXd &sensorloc, const TrilatParams &p) {
     
     // TODO improve initialization
-    this->statesize_ = xInit.size();
+    this->statesize_ = x_init.size();
     this->p_ = p;
     this->timestamp_prev_ = 0;
     
-    sensorloc_ = sensorLoc;
+    sensorloc_ = sensorloc;
     MatrixXd F = MatrixXd::Identity(statesize_, statesize_);                    // set state transition matrix F
-    MatrixXd R = MatrixXd::Identity(SUNFLOWER_NR, SUNFLOWER_NR) * p_.var_z;        // set measurement covariance matrix R
+    MatrixXd R = MatrixXd::Identity(SUNFLOWER_NR, SUNFLOWER_NR) * p_.var_z;     // set measurement covariance matrix R
     MatrixXd Q = MatrixXd::Identity(statesize_, statesize_);                    // set process noise covariance
     
-    MatrixXd PInit = MatrixXd::Zero(statesize_, statesize_);                    // only position of initial state is known
-    PInit(2,2) = 10;
-    PInit(3,3) = 10;
+    MatrixXd PInit = MatrixXd::Identity(statesize_, statesize_) * 0.5;          // only position of initial state is known
+    // PInit(2,2) = 10; // TODO fix this
+    // PInit(3,3) = 10;
     
-    MatrixXd HInit = getJacobian(sensorLoc, xInit);                             // calculate initial measurement matrix H
+    MatrixXd HInit = getJacobian(sensorloc, x_init);                             // calculate initial measurement matrix H
     
-    ekf_.initialize(xInit, PInit, F, HInit, R, Q);                              // initialize Kalman Filter with xInit
+    ekf_.initialize(x_init, PInit, F, HInit, R, Q);                              // initialize Kalman Filter with xInit
 }
 
 TrilatEKF::~TrilatEKF() {}
@@ -48,22 +48,25 @@ void TrilatEKF::processMeasurements(std::vector<TrilatMeasurement>* measurements
             0, 0, 0, 1, 0, dt,
             0, 0, 0, 0, 1, 0,
             0, 0, 0, 0, 0, 1;
-            ekf_.Q_ <<  dt5/20*p_.sigma_x, 0, dt4/8*p_.sigma_x, 0, dt3/6*p_.sigma_x, 0,
-            0, dt5/20*p_.sigma_y, 0, dt4/8*p_.sigma_y, 0, dt3/6*p_.sigma_y,
-            dt4/8*p_.sigma_x, 0, dt3/3*p_.sigma_x, 0, dt2/2*p_.sigma_x, 0,
-            0, dt4/8*p_.sigma_y, 0, dt3/3*p_.sigma_y, 0, dt2/2*p_.sigma_x,
-            dt3/3*p_.sigma_x, 0, dt2/2*p_.sigma_x, 0, dt*p_.sigma_x, 0 ,
-            0, dt3/3*p_.sigma_y, 0, dt2/2*p_.sigma_y, 0, dt*p_.sigma_y;
+            ekf_.Q_ <<  dt5/20*p_.var_x, 0, dt4/8*p_.var_x, 0, dt3/6*p_.var_x, 0,
+            0, dt5/20*p_.var_y, 0, dt4/8*p_.var_y, 0, dt3/6*p_.var_y,
+            dt4/8*p_.var_x, 0, dt3/3*p_.var_x, 0, dt2/2*p_.var_x, 0,
+            0, dt4/8*p_.var_y, 0, dt3/3*p_.var_y, 0, dt2/2*p_.var_x,
+            dt3/3*p_.var_x, 0, dt2/2*p_.var_x, 0, dt*p_.var_x, 0 ,
+            0, dt3/3*p_.var_y, 0, dt2/2*p_.var_y, 0, dt*p_.var_y;
             break;
             
         case 4:
             ekf_.F_(0, 2) = dt;
             ekf_.F_(1, 3) = dt;
-            ekf_.Q_ <<  dt4/4*p_.sigma_x, 0, dt3/2*p_.sigma_x, 0,
-            0, dt4/4*p_.sigma_y, 0, dt3/2*p_.sigma_y,
-            dt3/2*p_.sigma_x, 0, dt2*p_.sigma_x, 0,
-            0, dt3/2*p_.sigma_y, 0, dt2*p_.sigma_y;
+            ekf_.Q_ <<  dt4/4*p_.var_x, 0, dt3/2*p_.var_x, 0,
+            0, dt4/4*p_.var_y, 0, dt3/2*p_.var_y,
+            dt3/2*p_.var_x, 0, dt2*p_.var_x, 0,
+            0, dt3/2*p_.var_y, 0, dt2*p_.var_y;
             break;
+            
+        case 2:
+            ekf_.Q_ << p_.var_x, 0, 0, p_.var_y;
     }
     
     // perform prediction step
@@ -94,9 +97,9 @@ void TrilatEKF::processMeasurements(std::vector<TrilatMeasurement>* measurements
 MatrixXd TrilatEKF::getJacobian(const MatrixXd &sensorLoc, const VectorXd &x){
     
     MatrixXd H = MatrixXd::Zero(SUNFLOWER_NR, statesize_);
-    for (int i = 0; i < SUNFLOWER_NR; i++) {
+    for (int i = 0; i < SUNFLOWER_NR; ++i) {
         double den = sqrt(pow((x(0)-sensorLoc(i,0)),2) + pow((x(1)-sensorLoc(i,1)),2));
-        if (den < 0.001) {
+        if (den < 0.1) {
             std::cout << "Error: Division by zero in getJacobian()\n";
             return H;
         }
@@ -108,7 +111,7 @@ MatrixXd TrilatEKF::getJacobian(const MatrixXd &sensorLoc, const VectorXd &x){
     return H;
 }
 
-TrilatMeasurement TrilatEKF::toTrilatMeasurement(Measurement m0, Measurement m1, Measurement m2){
+TrilatMeasurement TrilatEKF::toTrilatMeasurement(const Measurement &m0, const Measurement &m1, const Measurement &m2){
     TrilatMeasurement tm;
     tm.timestamp = m0.timestamp;
     tm.sensorlocs = MatrixXd(SUNFLOWER_NR, 2);
@@ -118,7 +121,7 @@ TrilatMeasurement TrilatEKF::toTrilatMeasurement(Measurement m0, Measurement m1,
     return tm;
 }
 
-vector<TrilatMeasurement> TrilatEKF::getCombinations(vector<Measurement> mVec){
+vector<TrilatMeasurement> TrilatEKF::getCombinations(const vector<Measurement> &mVec){
     // TODO make this more versatile
     vector<TrilatMeasurement> tmVec(8);
     tmVec[0] = toTrilatMeasurement(mVec[0], mVec[2], mVec[4]);

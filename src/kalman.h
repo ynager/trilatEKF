@@ -44,7 +44,8 @@ public:
      * @param R_ Measurement covariance matrix
      * @param Q_ Process covariance matrix
      */
-    void initialize(VectorXd &x_, MatrixXd &P_, MatrixXd &F_, MatrixXd &H_, MatrixXd &R_, MatrixXd &Q_);
+    void initialize(const VectorXd &x, const MatrixXd &P, const MatrixXd &F,
+                    const MatrixXd &H, const MatrixXd &R, const MatrixXd &Q);
     
     /**
      * @brief Predict state and state covariance
@@ -55,14 +56,14 @@ public:
      * @brief Update state and state covariance using extended kalman filter
      * @param z_ measurement at timestep k+1
      */
-    void update(const VectorXd &z_);
+    void update(const VectorXd &z);
     
     /**
      * @brief Update state and state covariance using measurement with lowest Mahalanobis distance
      * @param zVec_ vector of measurements at timestep k+1
      * @return idx of measurement with lowest Mahalanobis distance
      */
-    uint16_t updateMahalanobis(const MatrixXd zVec);
+    uint16_t updateMahalanobis(const MatrixXd &zvec);
     
 private:
     

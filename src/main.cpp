@@ -27,15 +27,15 @@ int main(int argc, char* argv[]) {
     cout << "Running trilatEKF...\n";
     
     // set EKF params
-    TrilatParams ekfparams = {0.1, 10.0, 10.0};
+    TrilatParams ekfparams = {0.1, 1.0, 1.0};
     
     // initialize objects
-    VectorXd x_init_0(STATE_SIZE);
-    VectorXd x_init_1(STATE_SIZE);
+    VectorXd x_init_0 = VectorXd::Zero(STATE_SIZE);
+    VectorXd x_init_1 = VectorXd::Zero(STATE_SIZE);
     MatrixXd sensorloc = MatrixXd(3,2); // initial sensor location
     sensorloc <<    0.0, 0.0,
-    5.0, 0.0,
-    0.0, 5.0;
+                    5.0, 0.0,
+                    0.0, 5.0;
     
     // Kalman filter for two objects
     TrilatEKF *tekf_0;
@@ -63,8 +63,10 @@ int main(int argc, char* argv[]) {
         vec.assign(tok.begin(),tok.end());
         
         if (cnt == -1) {            // set initial position estimates
-            x_init_1 << stod(vec[0]), stod(vec[1]), 0.0, 0.0; //, 0.0, 0.0;
-            x_init_0 << stod(vec[2]), stod(vec[3]), 0.0, 0.0; //, 0.0, 0.0;
+            x_init_1(0) = stod(vec[0]);
+            x_init_1(1) = stod(vec[1]);
+            x_init_0(0) = stod(vec[2]);
+            x_init_0(1) = stod(vec[3]);
             tekf_0 = new TrilatEKF(x_init_0, sensorloc, ekfparams);
             tekf_1 = new TrilatEKF(x_init_1, sensorloc, ekfparams);
         }
@@ -100,7 +102,7 @@ int main(int argc, char* argv[]) {
                 << tekf_1->ekf_.x_(1) << "\n";
             }
         }
-        cnt += 1;
+        ++cnt;
     }
     outfile.close(); // close output file
 }

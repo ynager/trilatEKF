@@ -38,8 +38,8 @@ struct TrilatMeasurement {
 /** Trilateration EKF params */
 struct TrilatParams {
     float var_z;
-    float sigma_x;
-    float sigma_y;
+    float var_x;
+    float var_y;
 };
 
 /**
@@ -53,7 +53,7 @@ public:
     /**
      * @brief Constructor
      */
-    TrilatEKF(VectorXd xInit, MatrixXd sensorLoc, TrilatParams p);
+    TrilatEKF(const VectorXd &x_init, const MatrixXd &sensorloc, const TrilatParams &p);
     
     /**
      * @brief Destructor
@@ -89,7 +89,7 @@ public:
      * @param m2 third measurement
      * @return TrilatMeasurement
      */
-    TrilatMeasurement toTrilatMeasurement(Measurement m0, Measurement m1, Measurement m2);
+    TrilatMeasurement toTrilatMeasurement(const Measurement &m0, const Measurement &m1, const Measurement &m2);
     
     /**
      * @brief get measurement combinations
@@ -97,7 +97,7 @@ public:
      * @note measurements must be sorted by sensor
      * @return vector of TrilatMeasurements
      */
-    std::vector<TrilatMeasurement> getCombinations(std::vector<Measurement> mvec);
+    std::vector<TrilatMeasurement> getCombinations(const std::vector<Measurement> &mVec);
     
 private:
     

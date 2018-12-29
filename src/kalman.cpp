@@ -11,8 +11,8 @@ Kalman::Kalman() {}
 
 Kalman::~Kalman() {}
 
-void Kalman::initialize(VectorXd &x, MatrixXd &P, MatrixXd &F,
-                        MatrixXd &H, MatrixXd &R, MatrixXd &Q) {
+void Kalman::initialize(const VectorXd &x, const MatrixXd &P, const MatrixXd &F,
+                        const MatrixXd &H, const MatrixXd &R, const MatrixXd &Q) {
     x_ = x;
     P_ = P;
     F_ = F;
@@ -42,7 +42,7 @@ void Kalman::update(const VectorXd &z) {
     update(y, K);                   // perform updates
 }
 
-uint16_t Kalman::updateMahalanobis(const MatrixXd zVec) {
+uint16_t Kalman::updateMahalanobis(const MatrixXd &zvec) {
     
     double dist_min = std::numeric_limits<double>::max();
     uint16_t idx_best = 0;
@@ -50,9 +50,9 @@ uint16_t Kalman::updateMahalanobis(const MatrixXd zVec) {
     MatrixXd PH_t_best;
     MatrixXd S_i_best;
     
-    for(int i = 0; i < zVec.cols(); ++i) {
+    for(int i = 0; i < zvec.cols(); ++i) {
         
-        VectorXd z = zVec.col(i);       // extract single measurement
+        VectorXd z = zvec.col(i);       // extract single measurement
         VectorXd y = z - H_ * x_;       // D - H*X_k (innovation)
         
         MatrixXd H_t = H_.transpose();  // transpose measurement matrix
