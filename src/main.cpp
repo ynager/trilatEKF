@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
     
     // Output file handling
     std::ofstream outfile;
-    outfile.open ("output.csv");
+    outfile.open ("../data/output.csv");
     string data("../data/dataset_3.csv"); // load dataset
     //string data("../data/dataset_simple2.csv"); // load dataset
     
