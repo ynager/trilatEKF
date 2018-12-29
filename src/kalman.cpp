@@ -1,3 +1,8 @@
+/** @file kalman.cpp
+ *  @brief Kalman filter function implementations
+ *  @author Yannik Nager
+ */
+
 #include <math.h>
 #include <iostream>
 #include "kalman.h"
@@ -37,11 +42,10 @@ void Kalman::update(const VectorXd &z) {
     update(y, K);                   // perform updates
 }
 
-int Kalman::updateMahalanobis(const MatrixXd zVec) {
-    //std::cout << "z: " << z << std::endl;
-    //std::cout << "x: " << x_ << std::endl;
-    double dist_min = std::numeric_limits<short>::max();
-    int idx_best = 0;
+uint16_t Kalman::updateMahalanobis(const MatrixXd zVec) {
+    
+    double dist_min = std::numeric_limits<double>::max();
+    uint16_t idx_best = 0;
     VectorXd y_best;
     MatrixXd PH_t_best;
     MatrixXd S_i_best;

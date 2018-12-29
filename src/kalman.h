@@ -1,3 +1,8 @@
+/** @file kalman.h
+ *  @brief Kalman filter class definition
+ *  @author Yannik Nager
+ */
+
 #ifndef KALMAN_H_
 #define KALMAN_H_
 
@@ -6,6 +11,9 @@
 
 using namespace Eigen;
 
+/**
+ * Kalman filter class
+ */
 class Kalman {
 public:
     
@@ -18,16 +26,17 @@ public:
     // TODO: make access more restricted
     
     /**
-     * Constructor
+     * @brief Constructor
      */
     Kalman();
     
     /**
-     * Destructor
+     * @brief Destructor
      */
     ~Kalman();
     
-    /** Initialize Kalman Filter
+    /**
+     * @brief Initialize Kalman Filter
      * @param x_ Initial state
      * @param P_ Initial state covariance
      * @param F_ Transistion matrix
@@ -38,28 +47,31 @@ public:
     void initialize(VectorXd &x_, MatrixXd &P_, MatrixXd &F_, MatrixXd &H_, MatrixXd &R_, MatrixXd &Q_);
     
     /**
-     * Predict state and state covariance
+     * @brief Predict state and state covariance
      */
     void predict();
     
     /**
-     * Update state and state covariance using extended kalman filter
+     * @brief Update state and state covariance using extended kalman filter
      * @param z_ measurement at timestep k+1
      */
     void update(const VectorXd &z_);
-    void update(const VectorXd &y, const MatrixXd &K);
     
     /**
-     * Update state and state covariance using measurement with lowest Mahalanobis distance
+     * @brief Update state and state covariance using measurement with lowest Mahalanobis distance
      * @param zVec_ vector of measurements at timestep k+1
      * @return idx of measurement with lowest Mahalanobis distance
      */
-    int updateMahalanobis(const MatrixXd zVec);
+    uint16_t updateMahalanobis(const MatrixXd zVec);
     
 private:
     
-    MatrixXd trilaterationJacobian(const VectorXd &z, const MatrixXd &beaconLoc);
-    
+    /**
+     * @brief Update state and state covariance using extended kalman filter
+     * @param y
+     * @param K kalman gain
+     */
+    void update(const VectorXd &y, const MatrixXd &K);
 };
 
 #endif //KALMAN_H_

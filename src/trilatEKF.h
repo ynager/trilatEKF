@@ -1,3 +1,8 @@
+/** @file trilatEKF.h
+ *  @brief trilatEKF structs and class definition
+ *  @author Yannik Nager
+ */
+
 #ifndef TRILAT_EKF_H_
 #define TRILAT_EKF_H_
 
@@ -10,70 +15,98 @@
 #include "helpers.h"
 
 #define SUNFLOWER_NR 3
-#define STATE_SIZE 4
 #define VAR_Z 0.1 // sunflower meas variance
 #define MEAS_NOISE_X 10.0
 #define MEAS_NOISE_Y 10.0
 
 using namespace Eigen;
 
-/** Single Sunflower measurement */
+/** @brief Single measurement */
 struct Measurement {
-    long long timestamp_;
-    Vector2d sensorLoc_;
-    double distance_;
+    long long timestamp;
+    Vector2d sensorloc;
+    double distance;
 };
 
-/** Trilateration Measurement struct */
+/** Trilateration measurement struct */
 struct TrilatMeasurement {
-    long long timestamp_;
-    MatrixXd sensorLocs_;
-    VectorXd distances_;
+    long long timestamp;
+    MatrixXd sensorlocs;
+    VectorXd distances;
 };
 
+/** Trilateration EKF params */
+struct TrilatParams {
+    float var_z;
+    float sigma_x;
+    float sigma_y;
+};
+
+/**
+ * TrilatEKF class
+ */
 class TrilatEKF{
 public:
-    
     /** Kalman Filter */
     Kalman ekf_;
     
     /**
-     * Constructor
+     * @brief Constructor
      */
-    TrilatEKF(VectorXd xInit, MatrixXd sensorLoc);
+    TrilatEKF(VectorXd xInit, MatrixXd sensorLoc, TrilatParams p);
     
     /**
-     * Destructor
+     * @brief Destructor
      */
     ~TrilatEKF();
     
     /**
-     * Process measurement of type TrilatMeasurement
+     * @brief Process measurement of type TrilatMeasurement
      * @param Trilateration measurement package
+     * @return void
      */
     void processMeasurements(std::vector<TrilatMeasurement>* trilatMeasurements);
     
     /**
-     * calculate jacobian of measurement matrix
-     * @param measurement of type TrilatMeasurement
+     * @brief calculate jacobian of measurement matrix
+     * @param sensorLoc current sensor location
+     * @param x current state estimate
+     * @return jacobian matrix
      */
     MatrixXd getJacobian(const MatrixXd &sensorLoc, const VectorXd &x);
     
+    /**
+     * @brief calculate jacobian of measurement matrix
+     * @param m TrilatMeasurement
+     * @return jacobian matrix
+     */
     MatrixXd getJacobian(const TrilatMeasurement &m);
     
     /**
-     * Match single measurements into trilat measurement
+     * @brief Match single measurements into trilat measurement
+     * @param m0 first measurement
+     * @param m1 second measurement
+     * @param m2 third measurement
+     * @return TrilatMeasurement
      */
     TrilatMeasurement toTrilatMeasurement(Measurement m0, Measurement m1, Measurement m2);
     
-    std::vector<TrilatMeasurement> getCombinations(std::vector<Measurement> mVec);
+    /**
+     * @brief get measurement combinations
+     * @param vVec vector containing 6 measurements (2 measurements per sensor)
+     * @note measurements must be sorted by sensor
+     * @return vector of TrilatMeasurements
+     */
+    std::vector<TrilatMeasurement> getCombinations(std::vector<Measurement> mvec);
     
 private:
     
     Eigen::MatrixXd R_;
     Eigen::MatrixXd H_;
-    Eigen::MatrixXd sensorLoc_;
+    Eigen::MatrixXd sensorloc_;
+    TrilatParams p_;
     long long timestamp_prev_;
+    int statesize_;
 };
 
 #endif
