@@ -69,11 +69,11 @@ public:
     
     /**
      * @brief calculate jacobian of measurement matrix
-     * @param sensorloc current sensor location
+     * @param sensorlocs current sensor locations
      * @param x current state estimate
      * @return jacobian matrix
      */
-    MatrixXd getJacobian(const MatrixXd &sensorloc, const VectorXd &x);
+    MatrixXd getJacobian(const MatrixXd &sensorlocs, const VectorXd &x);
     
     /**
      * @brief calculate jacobian of measurement matrix
@@ -83,27 +83,26 @@ public:
     MatrixXd getJacobian(const TrilatMeasurement &m);
     
     /**
-     * @brief Match single measurements into trilat measurement
-     * @param m0 first measurement
-     * @param m1 second measurement
-     * @param m2 third measurement
-     * @return TrilatMeasurement
-     */
-    TrilatMeasurement toTrilatMeasurement(const Measurement &m0, const Measurement &m1, const Measurement &m2);
-    
-    /**
      * @brief get measurement combinations
-     * @param vVec vector containing 6 measurements (2 measurements per sensor)
+     * @param mvec vector containing 6 measurements (2 measurements per sensor)
      * @note measurements must be sorted by sensor
      * @return vector of TrilatMeasurements
      */
-    std::vector<TrilatMeasurement> getCombinations(const std::vector<Measurement> &mVec);
+    static std::vector<TrilatMeasurement> getCombinations(const std::vector<Measurement> &mvec);
+    
+    /**
+     * @brief Match single measurements into trilat measurement
+     * @param m0 distance to object of sensor 0
+     * @param m1 distance to object of sensor 1
+     * @param m2 distance to object of sensor 2
+     * @return TrilatMeasurement
+     */
+    static TrilatMeasurement toTrilatMeasurement(const Measurement &m0, const Measurement &m1, const Measurement &m2);
     
 private:
     
     Eigen::MatrixXd R_;
     Eigen::MatrixXd H_;
-    Eigen::MatrixXd sensorloc_;
     TrilatParams p_;
     long long timestamp_prev_;
     int statesize_;
